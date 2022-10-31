@@ -122,7 +122,7 @@ void frequencyTest()
 
     for(int i = 0; i < n; i++)
     {
-        random_number = (int)(10.0*rand()/ (RAND_MAX + 1.0));
+        random_number = (int)(10.0*rand() / (RAND_MAX + 1.0));
         number = random_number;
 
         numbers_stats.num_count[number] += 1;                               
@@ -157,8 +157,8 @@ void serialTest()
 
     for(int i = 0; i < n; i++)
     {
-        numbers[i][0] = (int)(10.0*rand()/ (RAND_MAX + 1.0));
-        numbers[i][1] = (int)(10.0*rand()/ (RAND_MAX + 1.0));
+        numbers[i][0] = (int)(10.0*rand() / (RAND_MAX + 1.0));
+        numbers[i][1] = (int)(10.0*rand() / (RAND_MAX + 1.0));
 
         number = numbers[i][0]*10 + numbers[i][1];
         
@@ -170,7 +170,7 @@ void serialTest()
     for(int i = 0; i < 100; i++)
     {
         numbers_stats.percentages[i] = (numbers_stats.num_count[i]*1.0 / n ) * 100;
-        // printf("%d\t\t %.2f\n", i, numbers_stats.percentages[i]);
+
         if(i < 10)
             printf("0%d\t\t %.2f\n", i, numbers_stats.percentages[i]);
         else
@@ -237,10 +237,7 @@ void pokerTest(int n, int (*fun_ptr)(int))
     if(n >= 4000) fclose(fp);
 
     for(int i = 0; i < 5; i++)
-    {
         printf("%d\n", num_count[i]);
-        if(i == 10) break;
-    }
 }
 
 
