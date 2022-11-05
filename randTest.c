@@ -1,5 +1,3 @@
-#include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +8,7 @@
 void meanTest();
 void frequencyTest();
 void serialTest();
-void pokerTest(int n, int (*fun_ptr)(int));
+void pokerTest(int n, int caller);
 void pokerTestFromFile();
 
 /* Utility helper functions for the default functions */
@@ -19,44 +17,8 @@ int q_compar (const void * a, const void * b) {
    return ( *(int*)a - *(int*)b );
 }
 
-static void writeRandomBytes()
-{
-    int n = 4000;
-
-    FILE *fp;
-
-    if((fp = fopen("numbers.txt", "w")) == NULL) {
-        fprintf(stderr, "Could not open file %s\n", "numbers.txt");
-        exit(EXIT_FAILURE);
-    }
-
-    // write the characters to file
-    for(int i = 0; i < n; i++)
-    {
-        fprintf(fp, "%d", (int)(10.0*rand()/ (RAND_MAX + 1.0)));
-        fprintf(fp, "%d", (int)(10.0*rand()/ (RAND_MAX + 1.0)));
-        fprintf(fp, "%d", (int)(10.0*rand()/ (RAND_MAX + 1.0)));
-        fprintf(fp, "%d", (int)(10.0*rand()/ (RAND_MAX + 1.0)));
-        fputc('\n', fp);
-    }
-
-    fclose(fp);
-}
-
 
 static FILE *fp;
-
-static int getRandomInt(int source)
-{
-    if(source == 0) // use random function
-        return (int)(10.0*rand() / (RAND_MAX + 1.0));
-    
-    // otherwise read and return int from file
-    int num = fgetc(fp);
-    if(num != '\n') return num;
-    else return fgetc(fp);
-}
-
 
 int main(int argc, const char **argv)
 {
@@ -78,8 +40,8 @@ int main(int argc, const char **argv)
     else if(test_number == 4) 
     {
         int n = 1000;
-        int (*fun_ptr)(int) = &getRandomInt;
-        pokerTest(n, fun_ptr);
+        int caller = test_number;
+        pokerTest(n, caller);
     }
     else if(test_number == 5)
     {
@@ -100,7 +62,7 @@ void meanTest()
 
     double mean = sum*1.0 / n;
 
-    printf("Mean of %d random numbers is : %.1f", n, mean);
+    printf("Mean of %d random numbers is : %.1f\n", n, mean);
     
 }
 
@@ -180,36 +142,64 @@ void serialTest()
 
 
 /* Tabulate cardinalities of 4-digit numbers in 1000 such random numbers */
-void pokerTest(int n, int (*fun_ptr)(int))
+void pokerTest(int n, int caller)
 {
     int numbers[n][4];
     int num_count[5] = {0, 0, 0, 0, 0};
 
-    if(n >= 4000) {
-        if((fp = fopen("numbers.txt", "r")) == NULL)
+    if(caller == 4)
+    {
+        if((fp = fopen("numbers.txt", "w")) == NULL)
         {
-            fprintf(stderr, "Could not read file: %s\n", strerror(errno));
+            perror("[Error opening numbers.txt]");
             exit(EXIT_FAILURE);
         }
-    }
 
+        for(int i = 0; i < n; i++)
+        {
+
+            for(int j = 0; j < 4; j++)
+            {
+                numbers[i][j] = (int)(10.0*rand() / (RAND_MAX + 1.0));
+                fprintf(fp, "%d", numbers[i][j]);
+            }
+
+            fputc('\n', fp);            
+        }
+        fclose(fp);
+    }
+    else if(caller == 5)
+    {
+        if((fp = fopen("numbers.txt", "r")) == NULL)
+        {
+            perror("[Error opening numbers.txt]");
+            exit(EXIT_FAILURE);
+        }
+
+        for(int i = 0; i < n; i++)
+        {
+            for(int j = 0; j < 4; j++)
+            {
+                numbers[i][j] = fgetc(fp) - '0';
+            }
+                
+            fgetc(fp); // read the trailing new line
+        }
+        fclose(fp);
+    }
+    
     for(int i = 0; i < n; i++)
     {
-        numbers[i][0] = (n < 4000? fun_ptr(0) : fun_ptr(1)); // (int)(10.0*rand()/ (RAND_MAX + 1.0)); // fun_ptr(0)
-        numbers[i][1] = (n < 4000? fun_ptr(0) : fun_ptr(1)); // (int)(10.0*rand()/ (RAND_MAX + 1.0));
-        numbers[i][2] = (n < 4000? fun_ptr(0) : fun_ptr(1)); // (int)(10.0*rand()/ (RAND_MAX + 1.0));
-        numbers[i][3] = (n < 4000? fun_ptr(0) : fun_ptr(1)); // (int)(10.0*rand()/ (RAND_MAX + 1.0));
-
         // create and sort the sequence for easy identification
         int numi_array[] = {numbers[i][0], numbers[i][1], numbers[i][2], numbers[i][3]}; 
 
         qsort(numi_array, 4, sizeof(int), q_compar);
 
         // define boolean variables for pattern identification
-        bool all_equal = (numi_array[0] == numi_array[1] == numi_array[2] == numi_array[3]);
-        bool three_equal = (numi_array[0] == numi_array[1] == numi_array[2]) 
+        int all_equal = (numi_array[0] == numi_array[1] == numi_array[2] == numi_array[3]);
+        int three_equal = (numi_array[0] == numi_array[1] == numi_array[2]) 
                             || (numi_array[1] == numi_array[2] == numi_array[3]);
-        bool one_pair = (numi_array[0] == numi_array[1]) || (numi_array[1] == numi_array[2]) 
+        int one_pair = (numi_array[0] == numi_array[1]) || (numi_array[1] == numi_array[2]) 
                         || (numi_array[2] == numi_array[3]);
 
         // case I: all the same eg 4444
@@ -234,18 +224,39 @@ void pokerTest(int n, int (*fun_ptr)(int))
         
     }
 
-    if(n >= 4000) fclose(fp);
+    char str[5][1024];
 
-    for(int i = 0; i < 5; i++)
-        printf("%d\n", num_count[i]);
+    printf("|\tGROUP\t\t\t\t\t| FREQUENCY | PERCENT |\n");
+    printf("%-48s", "|i) all the same (e.g. 4444)");
+    printf("|%5s%d%5s", " ", num_count[0], " ");
+    printf("|%2s%.2f%%%s |\n", " ", (num_count[0]*1.0 / 100), " ");
+    
+    printf("%-48s", "|ii)3 digits the same (e.g. 443, 3444, 4344)");
+    printf("|%5s%d%4s", " ", num_count[1], " ");
+    printf("|%2s%.2f%%%s |\n", " ", (num_count[1]*1.0 / 100), " ");
+
+    printf("%-48s", "|iii) two pairs (e.g 4334, 4433)");
+    printf("|%5s%d%4s", " ", num_count[2], " ");
+    printf("|%2s%.2f%%%s |\n", " ", (num_count[2]*1.0 / 100), " ");
+
+    printf("%-48s", "|iv) one pair (e.g 4324 or 4342)");
+    printf("|%5s%d%3s", " ", num_count[3], " ");
+    printf("|%2s%.2f%%%s |\n", " ", (num_count[3]*1.0 / 100), " ");
+
+    printf("%-48s", "|v) none identical.");
+    printf("|%5s%d%3s", " ", num_count[4], " ");
+    printf("|%2s%.2f%%%s |\n", " ", (num_count[4]*1.0 / 100), " ");
+    // for(int i = 0; i < 5; i++)
+    //     printf("%d\n", num_count[i]);
+
+    
 }
 
 
 /* poker test but with random numbers from file */
 void pokerTestFromFile()
 {
-    writeRandomBytes();
-    int n = 4000;
-    int (*fun_ptr)(int) = &getRandomInt;
-    pokerTest(n, fun_ptr);
+    int n = 1000;
+    int caller = 5;
+    pokerTest(n, caller);
 }
