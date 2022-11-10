@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 /* Default function prototypes for the tests */
 
@@ -12,37 +11,39 @@ void pokerTestFromFile();
 
 /* Utility helper functions for the default functions */
 
+/* qsort will use this function to sort integers */
 int q_compar (const void * a, const void * b) {
    return ( *(int*)a - *(int*)b );
 }
 
-
+// global file pointer for use in pokerTest functions
 static FILE *fp;
 
+/* entry point to the program */
 int main(int argc, const char **argv)
 {
-    if(argc < 2)
+    if(argc < 2) // check command line argument provided
     {
-        fprintf(stderr, "Usage: %s [arg]", argv[0]);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "Usage: %s [arg]", argv[0]); // report errors
+        exit(EXIT_FAILURE); // exit the program
     }
-    srand(time(0)); // set the seed to class value
 
+    // get cli arg and convert it from ascii to int
     int test_number = atoi(argv[1]);
 
-    if(test_number == 1)
+    if(test_number == 1) // call meanTest for 1
         meanTest();
-    else if(test_number == 2)
+    else if(test_number == 2) // call frequencyTest for 2
         frequencyTest();
-    else if(test_number == 3)
+    else if(test_number == 3) // call serialTest for 3
         serialTest();
-    else if(test_number == 4) 
+    else if(test_number == 4)  // call pokerTest for 4
     {
-        int n = 1000;
-        int caller = test_number;
+        int n = 1000; // initialize number of test random integers
+        int caller = test_number; // use the caller as provided in cli
         pokerTest(n, caller);
     }
-    else if(test_number == 5)
+    else if(test_number == 5) // call pokerTestFromFile
     {
         pokerTestFromFile();
     }
@@ -53,16 +54,16 @@ void meanTest()
 {
     int random_number, sum = 0, n = 1000;
 
-    for(int i = 0; i < n; i++)
+    for(int i = 0; i < n; i++) // loop to compute running sum of random numbers
     {
-        random_number = (int)(10.0*rand()/ (RAND_MAX + 1.0));
-        sum += random_number;
+        random_number = (int)(10.0*rand()/ (RAND_MAX + 1.0)); // generate the number
+        sum += random_number; // add the random number of the sum
     }
 
-    double mean = sum*1.0 / n;
+    double mean = sum*1.0 / n; // compute average of the sum
 
+    // display the results back to the user
     printf("Mean of %d random numbers is : %.1f\n", n, mean);
-    
 }
 
 
@@ -78,22 +79,22 @@ void frequencyTest()
     int random_number, n = 10000, number;
     struct num_stats numbers_stats;
 
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < 10; i++) // initialize the counts all to 0
         numbers_stats.num_count[i] = 0;
 
-    for(int i = 0; i < n; i++)
+    for(int i = 0; i < n; i++) // loop to compute random number frequencies
     {
         random_number = (int)(10.0*rand() / (RAND_MAX + 1.0));
-        number = random_number;
+        number = random_number; // store the random number
 
-        numbers_stats.num_count[number] += 1;                               
+        numbers_stats.num_count[number] += 1; // update the count of such number                  
     }
     
     printf("Number:\t Frequency(%%)\n");
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < 10; i++) // loop to computer percentages and display results
     {
         numbers_stats.percentages[i] = (numbers_stats.num_count[i]*1.0 / n ) * 100;
-        printf("%d\t %.2f\n", i, numbers_stats.percentages[i]);
+        printf("%d\t %.2f\n", i, numbers_stats.percentages[i]); // use tab characters for spacing
     }
 }
 
@@ -111,27 +112,29 @@ void serialTest()
     };
     struct num_stats numbers_stats;
 
-    for(int i = 0; i < 100; i++)
+    for(int i = 0; i < 100; i++) // intialize the stats to 0
         numbers_stats.num_count[i] = 0;
 
     int number;
 
-    for(int i = 0; i < n; i++)
+    for(int i = 0; i < n; i++) // generate the pairs
     {
         numbers[i][0] = (int)(10.0*rand() / (RAND_MAX + 1.0));
         numbers[i][1] = (int)(10.0*rand() / (RAND_MAX + 1.0));
 
-        number = numbers[i][0]*10 + numbers[i][1];
+        number = numbers[i][0]*10 + numbers[i][1]; // create pair
         
-        numbers_stats.num_count[number] += 1;
+        numbers_stats.num_count[number] += 1; // update the count of pairs
     }
 
     printf("Number Pair:\t Frequency(%%)\n");
 
     for(int i = 0; i < 100; i++)
     {
+        // compute the percentage distribution of the pairs
         numbers_stats.percentages[i] = (numbers_stats.num_count[i]*1.0 / n ) * 100;
 
+        // display the results using tabs for padded formatted output
         if(i < 10)
             printf("0%d\t\t %.2f\n", i, numbers_stats.percentages[i]);
         else
@@ -146,8 +149,9 @@ void pokerTest(int n, int caller)
     int numbers[n][4];
     int num_count[5] = {0, 0, 0, 0, 0};
 
-    if(caller == 4)
+    if(caller == 4) // the case of pokerTest
     {
+        // attempt opening file pointer, report error and exit on failure
         if((fp = fopen("numbers.txt", "w")) == NULL)
         {
             perror("[Error opening numbers.txt]");
@@ -156,19 +160,20 @@ void pokerTest(int n, int caller)
 
         for(int i = 0; i < n; i++)
         {
-
+            // generate and store the random variables in array and file
             for(int j = 0; j < 4; j++)
             {
                 numbers[i][j] = (int)(10.0*rand() / (RAND_MAX + 1.0));
                 fprintf(fp, "%d", numbers[i][j]);
             }
 
-            fputc('\n', fp);            
+            fputc('\n', fp); // separate numbers by new line      
         }
-        fclose(fp);
+        fclose(fp); // close the file pointer
     }
-    else if(caller == 5)
+    else if(caller == 5) // the case for pokerTestFromFile
     {
+        // attempt open read file pointer, report error and exit on failure
         if((fp = fopen("numbers.txt", "r")) == NULL)
         {
             perror("[Error opening numbers.txt]");
@@ -177,14 +182,15 @@ void pokerTest(int n, int caller)
 
         for(int i = 0; i < n; i++)
         {
+            // extract the numbers from each line in the file
             for(int j = 0; j < 4; j++)
             {
-                numbers[i][j] = fgetc(fp) - '0';
+                numbers[i][j] = fgetc(fp) - '0'; // hacky conversion from int-ascii to int
             }
                 
-            fgetc(fp); // read the trailing new line
+            fgetc(fp); // read off the trailing new line
         }
-        fclose(fp);
+        fclose(fp); // close the file pointer
     }
     
     for(int i = 0; i < n; i++)
@@ -195,7 +201,8 @@ void pokerTest(int n, int caller)
         qsort(numi_array, 4, sizeof(int), q_compar);
 
         // define boolean variables for pattern identification
-        int all_equal = (numi_array[0] == numi_array[1] == numi_array[2] == numi_array[3]);
+        int all_equal = (numi_array[0] == numi_array[1] && numi_array[1] == numi_array[2] 
+                            && numi_array[2] == numi_array[3]);
         int three_equal = (numi_array[0] == numi_array[1] == numi_array[2]) 
                             || (numi_array[1] == numi_array[2] == numi_array[3]);
         int one_pair = (numi_array[0] == numi_array[1]) || (numi_array[1] == numi_array[2]) 
@@ -223,14 +230,15 @@ void pokerTest(int n, int caller)
         
     }
 
-    char str[5][1024];
+    // Display the results for each groupong, the frequency and stats; 
+    // use tabs and padded formatting
 
     printf("|\tGROUP\t\t\t\t\t| FREQUENCY | PERCENT |\n");
     printf("%-48s", "|i) all the same (e.g. 4444)");
     printf("|%5s%d%5s", " ", num_count[0], " ");
     printf("|%2s%.2f%%%s |\n", " ", (num_count[0]*1.0 / 100), " ");
     
-    printf("%-48s", "|ii)3 digits the same (e.g. 443, 3444, 4344)");
+    printf("%-48s", "|ii) 3 digits the same (e.g. 443, 3444, 4344)");
     printf("|%5s%d%4s", " ", num_count[1], " ");
     printf("|%2s%.2f%%%s |\n", " ", (num_count[1]*1.0 / 100), " ");
 
@@ -245,9 +253,6 @@ void pokerTest(int n, int caller)
     printf("%-48s", "|v) none identical.");
     printf("|%5s%d%3s", " ", num_count[4], " ");
     printf("|%2s%.2f%%%s |\n", " ", (num_count[4]*1.0 / 100), " ");
-    // for(int i = 0; i < 5; i++)
-    //     printf("%d\n", num_count[i]);
-
     
 }
 
@@ -255,7 +260,7 @@ void pokerTest(int n, int caller)
 /* poker test but with random numbers from file */
 void pokerTestFromFile()
 {
-    int n = 1000;
-    int caller = 5;
+    int n = 1000; // number of random numbers
+    int caller = 5; // command line argument passed to call this function
     pokerTest(n, caller);
 }
